@@ -1,12 +1,12 @@
 {
-	"required": true,
-	"package": "eggs.eyeframes.mixin.client",
-	"compatibilityLevel": "JAVA_21",
-	"client": [
-		"EyeFramesClientMixin",
-		"EyeFramesOptionsMixin"
-	],
-	"injectors": {
-		"defaultRequire": 1
+  "required": true,
+  "package": "eggs.eyeframes.mixin.client",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "EyeFramesClientMixin",
+    "EyeFramesOptionsMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
 	}
 }

@@ -11,11 +11,12 @@ import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
+import static eggs.eyeframes.EyeFramesClient.SkinTextureSize;
+
 @Environment(EnvType.CLIENT)
 public class Face extends Screen {
 
     private final Screen parent;
-    private final int SkinTextureSize = 64;
     private Identifier skinTexture;
 
     public Face(Screen parent){
@@ -59,7 +60,7 @@ public class Face extends Screen {
         int pixelSize = 16;
         int offsetX = this.width / 2 - pixelSize * 8 / 2;
         int offsetY = this.height / 2 - pixelSize * 8 / 2;
-        for (int i = 0; i < 64; ++i){
+        for (int i = 0; i < SkinTextureSize; ++i){
             addPixelButton(
                     i % 8 + 8, i / 8 + 8,
                     i % 8 * pixelSize + offsetX, i / 8 * pixelSize + offsetY,
@@ -70,7 +71,7 @@ public class Face extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta){
         super.render(context, mouseX, mouseY, delta);
-        String text = Text.translatable("screens.Face").getString();
+        String text = Text.translatable("screens.eyeframes.face").getString();
         int x = this.width / 2 - textRenderer.getWidth(text) / 2;
         int y = 8;
         context.drawText(textRenderer, text, x, y, 0xFFFFFFFF, true);

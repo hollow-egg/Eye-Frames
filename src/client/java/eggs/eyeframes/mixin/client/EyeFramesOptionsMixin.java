@@ -23,7 +23,7 @@ public abstract class EyeFramesOptionsMixin extends Screen {
     }
 
     @Inject(method = "addOptions", at = @At("TAIL"))
-    private void addCustomButton(CallbackInfo ci) {
+    private void addEyeFramesButton(CallbackInfo ci) {
         final Identifier eyeTex = Identifier.of(MOD_ID, "textures/gui/eye_closed.png");
         final Identifier eyeTexHovered = Identifier.of(MOD_ID, "textures/gui/eye_open.png");
 
