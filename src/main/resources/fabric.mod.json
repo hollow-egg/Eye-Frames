@@ -1,18 +1,18 @@
 {
 	"schemaVersion": 1,
-	"id": "eye-frames",
+	"id": "eyeframes",
 	"version": "${version}",
 	"name": "Eye Frames",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "A Fabric mod, made to bring stylized animated eyes to life in Minecraft.",
 	"authors": [
-		"Me!"
+		"Hollow Egg"
 	],
 	"contact": {
 		"homepage": "https://fabricmc.net/",
 		"sources": "https://github.com/FabricMC/fabric-example-mod"
 	},
 	"license": "CC0-1.0",
-	"icon": "assets/eye-frames/icon.png",
+	"icon": "assets/eyeframes/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
@@ -23,9 +23,9 @@
 		]
 	},
 	"mixins": [
-		"eye-frames.mixins.json",
+      "eyeframes.mixins.json",
 		{
-			"config": "eye-frames.client.mixins.json",
+			"config": "eyeframes.client.mixins.json",
 			"environment": "client"
 		}
 	],
