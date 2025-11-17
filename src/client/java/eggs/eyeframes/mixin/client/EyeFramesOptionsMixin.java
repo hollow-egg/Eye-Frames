@@ -1,6 +1,6 @@
 package eggs.eyeframes.mixin.client;
 
-import eggs.eyeframes.screens.Face;
+import eggs.eyeframes.screens.HeadViewerScreen;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -54,7 +54,7 @@ public abstract class EyeFramesOptionsMixin extends Screen {
 
             @Override
             public void onClick(double mouseX, double mouseY){
-                MinecraftClient.getInstance().setScreen(new Face(MinecraftClient.getInstance().currentScreen));
+                MinecraftClient.getInstance().setScreen(new HeadViewerScreen(MinecraftClient.getInstance().currentScreen));
             }
 
             @Override
