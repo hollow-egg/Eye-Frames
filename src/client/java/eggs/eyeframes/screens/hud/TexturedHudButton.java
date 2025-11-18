@@ -1,4 +1,4 @@
-package eggs.eyeframes;
+package eggs.eyeframes.screens.hud;
 
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
@@ -6,10 +6,10 @@ import net.minecraft.util.Identifier;
 
 public class TexturedHudButton implements HudButton {
 
-    private final int x, y, width, height, u, v, texW, texH;
+    private final int x, y, width, height, u, v, regionSizeX, regionSizeY, texWidth, texHeight;
     private final Identifier texture;
 
-    public TexturedHudButton(Identifier texture, int x, int y, int w, int h, int u, int v, int texW, int texH) {
+    public TexturedHudButton(Identifier texture, int x, int y, int w, int h, int u, int v, int regionSizeX, int regionSizeY, int texW, int texH) {
         this.x = x;
         this.y = y;
         this.width = w;
@@ -17,8 +17,10 @@ public class TexturedHudButton implements HudButton {
         this.texture = texture;
         this.u = u;
         this.v = v;
-        this.texW = texW;
-        this.texH = texH;
+        this.regionSizeX = regionSizeX;
+        this.regionSizeY = regionSizeY;
+        this.texWidth = texW;
+        this.texHeight = texH;
     }
 
     @Override
@@ -26,9 +28,10 @@ public class TexturedHudButton implements HudButton {
         context.drawTexture(
                 texture,
                 x, y,
-                u, v,
                 width, height,
-                texW, texH
+                (float)u, (float)v,
+                regionSizeX, regionSizeY,
+                texWidth, texHeight
         );
 
         if (isHovered(mouseX, mouseY)) {

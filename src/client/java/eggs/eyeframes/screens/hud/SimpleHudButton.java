@@ -1,4 +1,4 @@
-package eggs.eyeframes;
+package eggs.eyeframes.screens.hud;
 
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;

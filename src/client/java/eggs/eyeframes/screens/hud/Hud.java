@@ -1,6 +1,7 @@
-package eggs.eyeframes;
+package eggs.eyeframes.screens.hud;
 
 import com.mojang.authlib.GameProfile;
+import eggs.eyeframes.tools.Input;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
@@ -8,7 +9,9 @@ import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
 
-public class Overlay {
+import static eggs.eyeframes.EyeFrames.SkinTextureSize;
+
+public class Hud {
     private static boolean showOverlay = false;
     private static final int ICON_SCALE = 16;
     private static Identifier cachedTexture = null;
@@ -51,9 +54,10 @@ public class Overlay {
         iconPreview = new TexturedHudButton(
                 cachedTexture,
                 x, y,
-                ICON_SCALE, ICON_SCALE,
-                ICON_SCALE, ICON_SCALE,
-                ICON_SCALE * 8, ICON_SCALE * 8
+                ICON_SCALE, ICON_SCALE, //width/height
+                8, 8, //uv
+                8, 8, //regionSize
+                SkinTextureSize, SkinTextureSize
         );
     }
 
