@@ -7,11 +7,7 @@
 	"authors": [
 		"Hollow Egg"
 	],
-	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
-	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/eyeframes/icon.png",
 	"environment": "*",
 	"entrypoints": {
@@ -33,9 +29,7 @@
 		"fabricloader": ">=0.17.3",
 		"minecraft": "~1.21.1",
 		"java": ">=21",
-		"fabric-api": "*"
-	},
-	"suggests": {
-		"another-mod": "*"
+		"fabric-api": "*",
+		"entity_texture_features": ">=7.0.2"
 	}
 }

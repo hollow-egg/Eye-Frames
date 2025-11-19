@@ -1,9 +1,9 @@
 package eggs.eyeframes.screens.hud;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.gui.GuiGraphics;
 
 public interface HudButton {
-    void render(DrawContext context, double mouseX, double mouseY, RenderTickCounter tickDelta);
+    void render(GuiGraphics context, double mouseX, double mouseY, DeltaTracker tickDelta);
     boolean isHovered(double mouseX, double mouseY);
 }

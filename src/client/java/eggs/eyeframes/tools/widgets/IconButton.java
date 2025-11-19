@@ -1,59 +1,59 @@
 package eggs.eyeframes.tools.widgets;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
-public class IconButton extends ClickableWidget {
+public class IconButton extends AbstractWidget {
 
-    private final Identifier texture;
+    private final ResourceLocation texture;
     private final Runnable onClick;
     private final String label;
 
     public IconButton(int x, int y, int width, int height,
-                      Identifier texture,
+                      ResourceLocation texture,
                       Runnable onClick, String label) {
 
-        super(x, y, width, height, Text.literal(""));
+        super(x, y, width, height, Component.literal(""));
         this.texture = texture;
         this.onClick = onClick;
         this.label = label;
     }
     //no label
     public IconButton(int x, int y, int width, int height,
-                      Identifier texture,
+                      ResourceLocation texture,
                       Runnable onClick) {
 
-        super(x, y, width, height, Text.literal(""));
+        super(x, y, width, height, Component.literal(""));
         this.texture = texture;
         this.onClick = onClick;
         this.label = null;
     }
 
     @Override
-    public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.drawTexture(texture, getX(), getY(),
+    public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+        context.blit(texture, getX(), getY(),
                 0, 0,
                 getWidth(), getHeight(),
                 getWidth(), getHeight());
 
         if (label != null) {
-            TextRenderer renderer = MinecraftClient.getInstance().textRenderer;
-            context.drawCenteredTextWithShadow(
+            Font renderer = Minecraft.getInstance().font;
+            context.drawCenteredString(
                     renderer,
                     label,
                     getX() + this.width / 2,
-                    getY() + (this.height - renderer.fontHeight) / 2,
+                    getY() + (this.height - renderer.lineHeight) / 2,
                     0xFFFFFF
             );
         }
 
         if (isHovered()) {
-            context.drawBorder(getX(), getY(), getWidth(), getHeight(), 0xFFFFFFFF);
+            context.renderOutline(getX(), getY(), getWidth(), getHeight(), 0xFFFFFFFF);
         }
     }
 
@@ -63,5 +63,5 @@ public class IconButton extends ClickableWidget {
     }
 
     @Override
-    protected void appendClickableNarrations(NarrationMessageBuilder builder) {}
+    protected void updateWidgetNarration(NarrationElementOutput builder) {}
 }

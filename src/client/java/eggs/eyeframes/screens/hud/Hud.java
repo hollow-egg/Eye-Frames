@@ -1,70 +1,56 @@
 package eggs.eyeframes.screens.hud;
 
-import com.mojang.authlib.GameProfile;
 import eggs.eyeframes.tools.Input;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.util.Identifier;
-
 import java.util.ArrayList;
-
-import static eggs.eyeframes.EyeFrames.SkinTextureSize;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 
 public class Hud {
     private static boolean showOverlay = false;
     private static final int ICON_SCALE = 16;
-    private static Identifier cachedTexture = null;
 
-    private static TexturedHudButton iconPreview;
+    private static PlayerHeadPreviewHudButton iconPreview = null;
     private static ArrayList<SimpleHudButton> OverlayButtons;
     private static final int overlayButtonColor = 0x50FFFFFF;
 
-    public static void tickEvent(MinecraftClient client) {
+    public static void tickEvent(Minecraft client) {
         if (client.player == null) return;
 
         boolean pressed = Input.isKeybindingPressed("control");
+
+        if (iconPreview == null){
+            createIconPreviewButton(client);
+        }
 
         //state has changed
         if (pressed != showOverlay) {
             showOverlay = pressed;
 
             if (showOverlay) {
-                client.mouse.unlockCursor();
-                cacheSkinTexture(client);
+                client.mouseHandler.releaseMouse();
                 //icon preview
                 createIconPreviewButton(client);
                 createOverlayButtons(client);
             } else {
-                client.mouse.lockCursor();
+                client.mouseHandler.grabMouse();
             }
         }
     }
 
-    private static void cacheSkinTexture(MinecraftClient client) {
-        GameProfile profile = client.getGameProfile();
-        if (profile != null) {
-            cachedTexture = client.getSkinProvider().getSkinTextures(profile).texture();
-        }
-    }
-
-    private static void createIconPreviewButton(MinecraftClient client) {
-        int x = client.getWindow().getScaledWidth() / 2 - ICON_SCALE / 2;
-        int y = client.getWindow().getScaledHeight() - ICON_SCALE - 30;
-        iconPreview = new TexturedHudButton(
-                cachedTexture,
+    private static void createIconPreviewButton(Minecraft client) {
+        int x = client.getWindow().getGuiScaledWidth() / 2 - ICON_SCALE / 2;
+        int y = client.getWindow().getGuiScaledHeight() - ICON_SCALE - 30;
+        iconPreview = new PlayerHeadPreviewHudButton(
                 x, y,
-                ICON_SCALE, ICON_SCALE, //width/height
-                8, 8, //uv
-                8, 8, //regionSize
-                SkinTextureSize, SkinTextureSize
+                ICON_SCALE, ICON_SCALE
         );
     }
 
-    private static void createOverlayButtons(MinecraftClient client) {
+    private static void createOverlayButtons(Minecraft client) {
         OverlayButtons = new ArrayList<>();
-        int width = client.getWindow().getScaledWidth();
-        int height = client.getWindow().getScaledHeight();
+        int width = client.getWindow().getGuiScaledWidth();
+        int height = client.getWindow().getGuiScaledHeight();
 
         int size = 30;
         int radius = 45;
@@ -87,16 +73,19 @@ public class Hud {
     }
 
 
-    public static void renderEvent(DrawContext context, RenderTickCounter tick) {
-        if (!showOverlay || iconPreview == null) return;
+    public static void renderEvent(GuiGraphics context, DeltaTracker tick) {
+        if (showOverlay) {
 
-        var client = MinecraftClient.getInstance();
+            var client = Minecraft.getInstance();
 
-        double mouseX = client.mouse.getX() * context.getScaledWindowWidth() / client.getWindow().getWidth();
-        double mouseY = client.mouse.getY() * context.getScaledWindowHeight() / client.getWindow().getHeight();
+            double mouseX = client.mouseHandler.xpos() * context.guiWidth() / client.getWindow().getScreenWidth();
+            double mouseY = client.mouseHandler.ypos() * context.guiHeight() / client.getWindow().getScreenHeight();
 
-        for (SimpleHudButton button : OverlayButtons)
-            button.render(context, mouseX, mouseY, tick);
-        iconPreview.render(context, mouseX, mouseY, tick);
+            for (SimpleHudButton button : OverlayButtons)
+                button.render(context, mouseX, mouseY, tick);
+            iconPreview.render(context, mouseX, mouseY, tick);
+        }
+        else if (iconPreview != null)
+            iconPreview.render(context, -1, -1, tick);
     }
 }

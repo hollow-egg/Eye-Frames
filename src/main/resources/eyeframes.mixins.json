@@ -3,7 +3,6 @@
 	"package": "eggs.eyeframes.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-      "EyeFramesMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

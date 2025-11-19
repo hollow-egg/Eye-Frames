@@ -1,7 +1,7 @@
 package eggs.eyeframes.screens.hud;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.gui.GuiGraphics;
 
 public class SimpleHudButton implements HudButton {
 
@@ -17,11 +17,11 @@ public class SimpleHudButton implements HudButton {
     }
 
     @Override
-    public void render(DrawContext context, double mouseX, double mouseY, RenderTickCounter tickDelta) {
+    public void render(GuiGraphics context, double mouseX, double mouseY, DeltaTracker tickDelta) {
         context.fill(x, y, x + width, y + height, color);
 
         if (isHovered(mouseX, mouseY)) {
-            context.drawBorder(x - 1, y - 1,
+            context.renderOutline(x - 1, y - 1,
                     width + 2, height + 2,
                     0xFFFFFFFF);
         }
