@@ -22,9 +22,6 @@ loom {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
 		}
-		"entity_texture_features" {
-			sourceSet sourceSets.client
-		}
 	}
 
 }
@@ -34,8 +31,6 @@ dependencies {
 	mappings loom.officialMojangMappings()
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-
-	modClientImplementation("maven.modrinth:entitytexturefeatures:${project.etf_version}")
 }
 
 processResources {

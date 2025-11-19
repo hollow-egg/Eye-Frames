@@ -1,10 +1,13 @@
 package eggs.eyeframes.tools;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import com.mojang.blaze3d.platform.InputConstants;
 import java.util.HashMap;
 
+@Environment(EnvType.CLIENT)
 public class Input {
     private static final HashMap<String, KeyMapping> keybindings = new HashMap<>();
 

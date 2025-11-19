@@ -1,8 +1,11 @@
-package eggs.eyeframes.screens.hud;
+package eggs.eyeframes.screens.hud.widgets;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.GuiGraphics;
 
+@Environment(EnvType.CLIENT)
 public class SimpleHudButton implements HudButton {
 
     private final int x, y, width, height;

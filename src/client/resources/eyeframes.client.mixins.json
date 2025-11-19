@@ -3,7 +3,8 @@
   "package": "eggs.eyeframes.mixin.client",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "EyeFramesOptionsMixin"
+    "EyeFramesOptionsMixin",
+    "PlayerRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

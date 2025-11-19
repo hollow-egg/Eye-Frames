@@ -1,7 +1,6 @@
-package eggs.eyeframes.screens;
+package eggs.eyeframes.screens.editor;
 
-import eggs.eyeframes.dynamicplayerhead.DynamicPlayerHeadTexture;
-import eggs.eyeframes.tools.widgets.*;
+import eggs.eyeframes.screens.options.widgets.IconButton;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphics;
@@ -9,8 +8,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-import static eggs.eyeframes.EyeFrames.PlayerHeadTextureHeight;
-import static eggs.eyeframes.EyeFrames.PlayerHeadTextureWidth;
+import static eggs.eyeframes.EyeFrames.*;
 
 @Environment(EnvType.CLIENT)
 public class PlayerHeadEditorScreen extends Screen {
@@ -26,9 +24,10 @@ public class PlayerHeadEditorScreen extends Screen {
 
     private State state = State.Face;
 
-    private static final ResourceLocation RIGHT_ARROW = ResourceLocation.fromNamespaceAndPath("minecraft", "textures/gui/sprites/widget/page_forward.png");
-    private static final ResourceLocation LEFT_ARROW  = ResourceLocation.fromNamespaceAndPath("minecraft", "textures/gui/sprites/widget/page_backward.png");
-    private static final ResourceLocation BUTTON_TEX  = ResourceLocation.fromNamespaceAndPath("minecraft", "textures/gui/sprites/widget/button.png");
+    private static final ResourceLocation RIGHT_ARROW = ResourceLocation.withDefaultNamespace("textures/gui/sprites/widget/page_forward.png");
+    private static final ResourceLocation LEFT_ARROW  = ResourceLocation.withDefaultNamespace("textures/gui/sprites/widget/page_backward.png");
+    private static final ResourceLocation BUTTON_TEX  = ResourceLocation.withDefaultNamespace("textures/gui/sprites/widget/button.png");
+    private static final ResourceLocation DEFAULT_PLAYER_TEST = ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/temp/hollow_egg.png");
 
     private static final int ICON_SIZE = 20;
     private static final int IMAGE_SCALE = 100;
@@ -91,7 +90,7 @@ public class PlayerHeadEditorScreen extends Screen {
                 width - ICON_SIZE * 2, ICON_SIZE,
                 ICON_SIZE * 2, ICON_SIZE,
                 BUTTON_TEX,
-                DynamicPlayerHeadTexture::reset,
+                ()->{}, //TODO
                 "Reset"
         ));
     }
@@ -130,7 +129,7 @@ public class PlayerHeadEditorScreen extends Screen {
         int x = width / 2 - size / 2;
         int y = height / 2 - size / 2;
 
-        ResourceLocation tex = DynamicPlayerHeadTexture.get();
+        ResourceLocation tex = DEFAULT_PLAYER_TEST; //TODO
         // Bottom layer
         context.blit(
                 tex,

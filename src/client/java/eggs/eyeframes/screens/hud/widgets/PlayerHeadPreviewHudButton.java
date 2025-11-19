@@ -1,15 +1,18 @@
-package eggs.eyeframes.screens.hud;
+package eggs.eyeframes.screens.hud.widgets;
 
-import eggs.eyeframes.dynamicplayerhead.DynamicPlayerHeadTexture;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
 
-import static eggs.eyeframes.EyeFrames.PlayerHeadTextureHeight;
-import static eggs.eyeframes.EyeFrames.PlayerHeadTextureWidth;
+import static eggs.eyeframes.EyeFrames.*;
 
+@Environment(EnvType.CLIENT)
 public class PlayerHeadPreviewHudButton implements HudButton {
 
     private final int x, y, width, height;
+    private static final ResourceLocation DEFAULT_PLAYER_TEST = ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/temp/hollow_egg.png");
 
     public PlayerHeadPreviewHudButton(int x, int y,
                                       int w, int h) {
@@ -25,7 +28,7 @@ public class PlayerHeadPreviewHudButton implements HudButton {
         int u = 8;
         int v = 8;
         context.blit(
-                DynamicPlayerHeadTexture.get(),
+                DEFAULT_PLAYER_TEST,
                 x, y,
                 width, height,
                 (float)u, (float)v,
@@ -35,9 +38,9 @@ public class PlayerHeadPreviewHudButton implements HudButton {
 
         // Top layer
         u+=32;
-        int offset = 2;
+        int offset = 1;
         context.blit(
-                DynamicPlayerHeadTexture.get(),
+                DEFAULT_PLAYER_TEST,
                 x - offset, y - offset,
                 width + offset * 2, width + offset * 2,
                 (float)u, (float)v,

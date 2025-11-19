@@ -1,11 +1,17 @@
 package eggs.eyeframes.screens.hud;
 
+import eggs.eyeframes.screens.hud.widgets.PlayerHeadPreviewHudButton;
+import eggs.eyeframes.screens.hud.widgets.SimpleHudButton;
 import eggs.eyeframes.tools.Input;
 import java.util.ArrayList;
+
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 
+@Environment(EnvType.CLIENT)
 public class Hud {
     private static boolean showOverlay = false;
     private static final int ICON_SCALE = 16;

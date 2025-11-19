@@ -1,5 +1,7 @@
-package eggs.eyeframes.tools.widgets;
+package eggs.eyeframes.screens.options.widgets;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -8,6 +10,7 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
+@Environment(EnvType.CLIENT)
 public class IconButton extends AbstractWidget {
 
     private final ResourceLocation texture;

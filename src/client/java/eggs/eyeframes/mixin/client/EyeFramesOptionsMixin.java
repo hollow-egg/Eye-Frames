@@ -1,6 +1,6 @@
 package eggs.eyeframes.mixin.client;
 
-import eggs.eyeframes.screens.PlayerHeadEditorScreen;
+import eggs.eyeframes.screens.editor.PlayerHeadEditorScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;

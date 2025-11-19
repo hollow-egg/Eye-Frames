@@ -16,5 +16,5 @@ public class EyeFramesClient implements ClientModInitializer {
 		Input.addKeybinding("control", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_ALT, Category);
 		ClientTickEvents.END_CLIENT_TICK.register(Hud::tickEvent);
 		HudRenderCallback.EVENT.register(Hud::renderEvent);
-    }
+	}
 }
