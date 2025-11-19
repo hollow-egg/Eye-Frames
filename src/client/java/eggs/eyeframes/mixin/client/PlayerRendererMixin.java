@@ -7,6 +7,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.PlayerModelPart;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -40,29 +41,36 @@ public abstract class PlayerRendererMixin{
     @Unique
     private boolean alreadyRun = false; //avoids stack overflow (cuz of recursion)
 
-    @Inject(method = "render(Lnet/minecraft/client/player/AbstractClientPlayer;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"))
-    private void onRenderHead(AbstractClientPlayer player, float f, float g, PoseStack matrices,
-                              MultiBufferSource bufferSource, int light, CallbackInfo ci) {
+    @Inject(method = "setModelProperties",
+            at = @At("TAIL"))
+    private void eyeframes$SwitchModels(AbstractClientPlayer player, CallbackInfo ci) {
+        PlayerRenderer renderer = (PlayerRenderer) (Object) this;
+        PlayerModel<AbstractClientPlayer> model = renderer.getModel();
 
-        if (!alreadyRun) {
-            alreadyRun = true;
-
-            //enable custom skin for one render pass
-            useCustomSkin = true;
-            //disable everything but head
-            PlayerRenderer renderer = (PlayerRenderer) (Object) this;
-            PlayerModel<AbstractClientPlayer> model = renderer.getModel();
-            model.setAllVisible(false);
-            model.head.visible = true;
-            model.hat.visible = true;
-
-            render(player, f, g, matrices, bufferSource, light);
-            useCustomSkin = false;
-            model.setAllVisible(true);
+        if (!alreadyRun) { //must draw body first so first person hand draws correctly (idk why)
+            //disable only head
             model.head.visible = false;
             model.hat.visible = false;
+            useCustomSkin = false;
+        }
+        else {
+            //disable everything but head
+            model.setAllVisible(false);
+            model.head.visible = true;
+            model.hat.visible = player.isModelPartShown(PlayerModelPart.HAT); //default settings for hat
+            useCustomSkin = true;
+        }
+    }
 
+    @Inject(method = "render(Lnet/minecraft/client/player/AbstractClientPlayer;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
+            at = @At("TAIL"))
+    private void eyeframes$ManagePasses(AbstractClientPlayer player, float f, float g, PoseStack matrices,
+                              MultiBufferSource bufferSource, int light, CallbackInfo ci) {
+
+        //should run twice, once with just the head, once with just the body (with default changes)
+        if (!alreadyRun) {
+            alreadyRun = true;
+            render(player, f, g, matrices, bufferSource, light);
             alreadyRun = false;
         }
     }
