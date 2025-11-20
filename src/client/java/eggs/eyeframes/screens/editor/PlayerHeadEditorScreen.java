@@ -1,5 +1,7 @@
 package eggs.eyeframes.screens.editor;
 
+import eggs.eyeframes.dynamicskin.DynamicSkinManager;
+import eggs.eyeframes.dynamicskin.PlayerHead;
 import eggs.eyeframes.screens.options.widgets.IconButton;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -27,7 +29,6 @@ public class PlayerHeadEditorScreen extends Screen {
     private static final ResourceLocation RIGHT_ARROW = ResourceLocation.withDefaultNamespace("textures/gui/sprites/widget/page_forward.png");
     private static final ResourceLocation LEFT_ARROW  = ResourceLocation.withDefaultNamespace("textures/gui/sprites/widget/page_backward.png");
     private static final ResourceLocation BUTTON_TEX  = ResourceLocation.withDefaultNamespace("textures/gui/sprites/widget/button.png");
-    private static final ResourceLocation DEFAULT_PLAYER_TEST = ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/temp/hollow_egg.png");
 
     private static final int ICON_SIZE = 20;
     private static final int IMAGE_SCALE = 100;
@@ -90,7 +91,7 @@ public class PlayerHeadEditorScreen extends Screen {
                 width - ICON_SIZE * 2, ICON_SIZE,
                 ICON_SIZE * 2, ICON_SIZE,
                 BUTTON_TEX,
-                ()->{}, //TODO
+                PlayerHead::reset,
                 "Reset"
         ));
     }
@@ -106,10 +107,10 @@ public class PlayerHeadEditorScreen extends Screen {
                 0xFFFFFFFF,
                 true);
 
-        renderHead(context);
+        renderHead(context, mouseX, mouseY);
     }
 
-    private void renderHead(GuiGraphics context) {
+    private void renderHead(GuiGraphics context, int mouseX, int mouseY) {
         int u = switch (state) {
             case Left -> 0;
             case Face, Top -> 1;
@@ -129,7 +130,7 @@ public class PlayerHeadEditorScreen extends Screen {
         int x = width / 2 - size / 2;
         int y = height / 2 - size / 2;
 
-        ResourceLocation tex = DEFAULT_PLAYER_TEST; //TODO
+        ResourceLocation tex = DynamicSkinManager.getDynamicSkinTextureLocation();
         // Bottom layer
         context.blit(
                 tex,
@@ -152,6 +153,17 @@ public class PlayerHeadEditorScreen extends Screen {
                 8, 8,
                 PlayerHeadTextureWidth, PlayerHeadTextureHeight
         );
+
+        context.renderOutline(mouseX, mouseY,
+                size / 8, size / 8,
+                0xFFFFFFFF);
+
+        int px = u + mouseX / 32;
+        int py = v + mouseY / 32;
+        if (px <= 64 && py <= 16) {
+            PlayerHead.getTexture().setPixelRGBA(px, py, 0xFFFF00FF);
+            DynamicSkinManager.updateHeadParts(PlayerHead.getTexture());
+        }
     }
 
     @Override
