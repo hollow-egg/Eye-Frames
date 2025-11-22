@@ -1,85 +1,55 @@
 package eggs.eyeframes.screens.editor;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import eggs.eyeframes.dynamicskin.DynamicSkinManager;
 import eggs.eyeframes.dynamicskin.PlayerHead;
 import eggs.eyeframes.screens.options.widgets.IconButton;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import org.joml.Quaternionf;
+import org.lwjgl.glfw.GLFW;
 
-import static eggs.eyeframes.EyeFrames.*;
+import static eggs.eyeframes.dynamicskin.PlayerHead.HeadTextureHeight;
+import static eggs.eyeframes.dynamicskin.PlayerHead.HeadTextureWidth;
 
 @Environment(EnvType.CLIENT)
 public class PlayerHeadEditorScreen extends Screen {
 
     private final Screen parent;
 
-    public enum State {
-        Left(0), Face(1), Right(2), Back(3), Top(4), Bottom(5);
-        public final int index;
-
-        State(int index) { this.index = index; }
-    }
-
-    private State state = State.Face;
-
-    private static final ResourceLocation RIGHT_ARROW = ResourceLocation.withDefaultNamespace("textures/gui/sprites/widget/page_forward.png");
-    private static final ResourceLocation LEFT_ARROW  = ResourceLocation.withDefaultNamespace("textures/gui/sprites/widget/page_backward.png");
-    private static final ResourceLocation BUTTON_TEX  = ResourceLocation.withDefaultNamespace("textures/gui/sprites/widget/button.png");
+    private float rotX = 0;
+    private float rotY = 0;
+    private boolean rotating = true;
+    private boolean penTool = false;
 
     private static final int ICON_SIZE = 20;
     private static final int IMAGE_SCALE = 100;
+    private static boolean mouseDown = false;
+    private static final ResourceLocation BUTTON_TEX = ResourceLocation.withDefaultNamespace("textures/gui/sprites/widget/button.png");
+    private static final ResourceLocation BUTTON_DISABLED_TEX = ResourceLocation.withDefaultNamespace("textures/gui/sprites/widget/button_disabled.png");
 
     public PlayerHeadEditorScreen(Screen parent) {
         super(Component.literal("Head Editor"));
         this.parent = parent;
     }
 
+    private int debugMouseX = 0;
+    private int debugMouseY = 0;
+
     @Override
     protected void init() {
-        int cx = width / 2;
-        int cy = height / 2;
-
-        // Right arrow
-        addRenderableWidget(new IconButton(
-                cx + IMAGE_SCALE / 2 + ICON_SIZE, cy - ICON_SIZE / 2,
-                ICON_SIZE, ICON_SIZE,
-                RIGHT_ARROW,
-                () -> state = State.values()[(state.index + 1) % 4]
-        ));
-
-        // Left arrow
-        addRenderableWidget(new IconButton(
-                cx - IMAGE_SCALE / 2 - ICON_SIZE * 2, cy - ICON_SIZE / 2,
-                ICON_SIZE, ICON_SIZE,
-                LEFT_ARROW,
-                () -> state = State.values()[(state.index + 3) % 4]
-        ));
-
-        // Top
-        addRenderableWidget(new IconButton(
-                cx - ICON_SIZE / 2, ICON_SIZE,
-                ICON_SIZE, ICON_SIZE,
-                BUTTON_TEX,
-                () -> state = State.Top,
-                "^"
-        ));
-
-        // Bottom
-        addRenderableWidget(new IconButton(
-                cx - ICON_SIZE / 2, cy + IMAGE_SCALE / 2 + ICON_SIZE,
-                ICON_SIZE, ICON_SIZE,
-                BUTTON_TEX,
-                () -> state = State.Bottom,
-                "v"
-        ));
-
         // Done button
         addRenderableWidget(new IconButton(
-                cx - ICON_SIZE, height - ICON_SIZE,
+                width / 2 - ICON_SIZE, height - ICON_SIZE,
                 ICON_SIZE * 2, ICON_SIZE,
                 BUTTON_TEX,
                 this::onClose,
@@ -91,9 +61,16 @@ public class PlayerHeadEditorScreen extends Screen {
                 width - ICON_SIZE * 2, ICON_SIZE,
                 ICON_SIZE * 2, ICON_SIZE,
                 BUTTON_TEX,
-                PlayerHead::reset,
+                () ->{
+                    PlayerHead.reset();
+                    DynamicSkinManager.updateHead(PlayerHead.getTexture());
+                },
                 "Reset"
         ));
+
+        if (!DynamicSkinManager.initialized) {
+            DynamicSkinManager.initialize().thenRun(PlayerHead::initialize);
+        }
     }
 
     @Override
@@ -101,68 +78,94 @@ public class PlayerHeadEditorScreen extends Screen {
         super.render(context, mouseX, mouseY, delta);
 
         Component title = Component.translatable("screens.eyeframes.head_viewer");
-        context.drawString(font, title,
-                width / 2 - font.width(title) / 2,
-                10,
-                0xFFFFFFFF,
-                true);
+        context.drawString(font, title, width / 2 - font.width(title) / 2, 10, 0xFFFFFFFF, true);
 
-        renderHead(context, mouseX, mouseY);
+        render3DPlayerHead(context, mouseX, mouseY);
+
+        String coords = String.format("Mouse: (%d, %d)", debugMouseX, debugMouseY);
+        context.drawString(font, coords, 10, height - 20, 0xFFFFFF00, true);
     }
 
-    private void renderHead(GuiGraphics context, int mouseX, int mouseY) {
-        int u = switch (state) {
-            case Left -> 0;
-            case Face, Top -> 1;
-            case Right, Bottom -> 2;
-            case Back -> 3;
-        };
-        int v = switch (state) {
-            case Top, Bottom -> 0;
-            default -> 1;
-        };
+    private void render3DPlayerHead(GuiGraphics context, int mouseX, int mouseY) {
+        if (!DynamicSkinManager.initialized) return;
 
-        //real uvs
-        u*=8;
-        v*=8;
+        int centerX = width / 2 - 50;
+        int centerY = height / 2 + 20;
 
-        int size = IMAGE_SCALE;
-        int x = width / 2 - size / 2;
-        int y = height / 2 - size / 2;
+        PoseStack poseStack = context.pose();
+        poseStack.pushPose();
 
-        ResourceLocation tex = DynamicSkinManager.getDynamicSkinTextureLocation();
-        // Bottom layer
-        context.blit(
-                tex,
-                x, y,
-                size, size,
-                (float)u, (float)v,
-                8, 8,
-                PlayerHeadTextureWidth, PlayerHeadTextureHeight
+        poseStack.translate(centerX, centerY, IMAGE_SCALE);
+        float scale = IMAGE_SCALE;
+        poseStack.scale(scale, scale, scale);
+
+        Quaternionf rotation = new Quaternionf().rotateXYZ((float) Math.toRadians(rotX), (float) Math.toRadians(rotY), 0);
+        poseStack.mulPose(rotation);
+
+        MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
+        VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.entitySolid(DynamicSkinManager.getDynamicSkinTextureLocation()));
+
+        int light = 0xF000F0;
+        int overlay = OverlayTexture.NO_OVERLAY;
+
+        PlayerHead.getHeadModel().render(
+                poseStack,
+                vertexConsumer,
+                light,
+                overlay,
+                0xFFFFFFFF
         );
 
-        // Top layer
-        u+=32;
-        int offset = 2;
-        int overlay = size + offset * 2;
-        context.blit(
-                tex,
-                x - offset, y - offset,
-                overlay, overlay,
-                (float)u, (float)v,
-                8, 8,
-                PlayerHeadTextureWidth, PlayerHeadTextureHeight
-        );
+        bufferSource.endBatch();
+        poseStack.popPose();
+    }
 
-        context.renderOutline(mouseX, mouseY,
-                size / 8, size / 8,
-                0xFFFFFFFF);
+    @Override
+    public boolean mouseDragged(double x, double y, int button, double deltaX, double deltaY) {
+        if (rotating) {
+            rotY -= (float) (deltaX * 0.5f);
+            rotX += (float) (deltaY * 0.5f);
+            rotX = Math.max(-90f, Math.min(90f, rotX));
+            return true;
+        }
+        else if (penTool) {
+            editPixel(x, y);
+        }
+        return super.mouseDragged(x, y, button, deltaX, deltaY);
+    }
 
-        int px = u + mouseX / 32;
-        int py = v + mouseY / 32;
-        if (px <= 64 && py <= 16) {
+    @Override
+    public boolean mouseClicked(double x, double y, int i) {
+        if (i == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+            mouseDown = true;
+            if (penTool) {
+                editPixel(x, y);
+            }
+        }
+
+        return super.mouseClicked(x, y, i);
+    }
+
+    @Override
+    public boolean mouseReleased(double x, double y, int i) {
+        if (i == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+            mouseDown = false;
+            rotating = false;
+        }
+        return super.mouseReleased(x, y, i);
+    }
+
+    private void editPixel(double mouseX, double mouseY) {
+        int px=(int)mouseX;
+        int py=(int)mouseY;
+
+        debugMouseX = px;
+        debugMouseY = py;
+
+        if (px >= 0 && px < HeadTextureWidth &&
+            py >= 0 && py < HeadTextureHeight) {
             PlayerHead.getTexture().setPixelRGBA(px, py, 0xFFFF00FF);
-            DynamicSkinManager.updateHeadParts(PlayerHead.getTexture());
+            DynamicSkinManager.updateHead(PlayerHead.getTexture());
         }
     }
 

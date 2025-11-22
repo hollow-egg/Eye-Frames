@@ -13,7 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 @Environment(EnvType.CLIENT)
 public class IconButton extends AbstractWidget {
 
-    private final ResourceLocation texture;
+    private ResourceLocation texture;
     private final Runnable onClick;
     private final String label;
 
@@ -55,9 +55,13 @@ public class IconButton extends AbstractWidget {
             );
         }
 
-        if (isHovered()) {
+        if (active && isHovered()) {
             context.renderOutline(getX(), getY(), getWidth(), getHeight(), 0xFFFFFFFF);
         }
+    }
+
+    public void setTexture(ResourceLocation texture) {
+        this.texture = texture;
     }
 
     @Override

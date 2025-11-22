@@ -7,6 +7,8 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.GuiGraphics;
 
 import static eggs.eyeframes.EyeFrames.*;
+import static eggs.eyeframes.dynamicskin.DynamicSkinManager.PlayerTextureHeight;
+import static eggs.eyeframes.dynamicskin.DynamicSkinManager.PlayerTextureWidth;
 
 @Environment(EnvType.CLIENT)
 public class PlayerHeadPreviewHudButton implements HudButton {
@@ -32,7 +34,7 @@ public class PlayerHeadPreviewHudButton implements HudButton {
                 width, height,
                 (float)u, (float)v,
                 8, 8,
-                PlayerHeadTextureWidth, PlayerHeadTextureHeight
+                PlayerTextureWidth, PlayerTextureHeight
         );
 
         // Top layer
@@ -44,7 +46,7 @@ public class PlayerHeadPreviewHudButton implements HudButton {
                 width + offset * 2, width + offset * 2,
                 (float)u, (float)v,
                 8, 8,
-                PlayerHeadTextureWidth, PlayerHeadTextureHeight
+                PlayerTextureWidth, PlayerTextureHeight
         );
 
         if (isHovered(mouseX, mouseY)) {

@@ -1,30 +1,40 @@
 package eggs.eyeframes.dynamicskin;
 
+import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.DefaultPlayerSkin;
+import net.minecraft.client.resources.SkinManager;
 import net.minecraft.resources.ResourceLocation;
 
-import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 
 public class VanillaSkin {
-    private static final ResourceLocation steve = ResourceLocation.withDefaultNamespace("textures/entity/player/wide/steve.png");
 
-    public static NativeImage getVanillaSkin() {
-        NativeImage skinTextureBase;
-        try {
-            skinTextureBase = NativeImage.read(Minecraft.getInstance().getResourceManager().open(getVanillaSkinLocation()));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    public static CompletableFuture<NativeImage> loadVanillaSkin() {
+        Minecraft mc = Minecraft.getInstance();
+        SkinManager skins = mc.getSkinManager();
+
+        //if player does not exist (in menu)
+        if (mc.player == null) {
+            return CompletableFuture.supplyAsync(() -> {
+                try {
+                    return NativeImage.read(mc.getResourceManager().open(DefaultPlayerSkin.getDefaultTexture()));
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to load default skin", e);
+                }
+            });
         }
-        return skinTextureBase;
-    }
-    public static ResourceLocation getVanillaSkinLocation(){
-        if (Minecraft.getInstance().player == null)
-            return steve; //fallback
 
-        return Minecraft.getInstance()
-                .getSkinManager()
-                .getInsecureSkin(Minecraft.getInstance().player.getGameProfile())
-                .texture();
+        //if player exists (in game)
+        GameProfile profile = mc.player.getGameProfile();
+        return skins.getOrLoad(profile).thenApply(playerSkin -> {
+            ResourceLocation tex = playerSkin.texture();
+            try {
+                return NativeImage.read(mc.getResourceManager().open(tex));
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to load player skin", e);
+            }
+        });
     }
 }
