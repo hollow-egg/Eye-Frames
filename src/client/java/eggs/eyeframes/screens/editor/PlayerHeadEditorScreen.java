@@ -1,15 +1,21 @@
 package eggs.eyeframes.screens.editor;
 
+import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import eggs.eyeframes.EyeFramesClient;
 import eggs.eyeframes.dynamicskin.DynamicSkinManager;
 import eggs.eyeframes.dynamicskin.PlayerHead;
-import eggs.eyeframes.screens.options.widgets.IconButton;
+import eggs.eyeframes.screens.widgets.Slider;
+import eggs.eyeframes.screens.widgets.IconButton;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -18,8 +24,7 @@ import net.minecraft.resources.ResourceLocation;
 import org.joml.Quaternionf;
 import org.lwjgl.glfw.GLFW;
 
-import static eggs.eyeframes.dynamicskin.PlayerHead.HeadTextureHeight;
-import static eggs.eyeframes.dynamicskin.PlayerHead.HeadTextureWidth;
+import static eggs.eyeframes.EyeFramesClient.*;
 
 @Environment(EnvType.CLIENT)
 public class PlayerHeadEditorScreen extends Screen {
@@ -27,23 +32,32 @@ public class PlayerHeadEditorScreen extends Screen {
     private final Screen parent;
 
     private float rotX = 0;
-    private float rotY = 0;
-    private boolean rotating = true;
-    private boolean penTool = false;
+    private float rotY = 180;
 
     private static final int ICON_SIZE = 20;
-    private static final int IMAGE_SCALE = 100;
+    private static final int IMAGE_SCALE = 5;
+    private static final int MODEL_SCALE = 100;
     private static boolean mouseDown = false;
     private static final ResourceLocation BUTTON_TEX = ResourceLocation.withDefaultNamespace("textures/gui/sprites/widget/button.png");
-    private static final ResourceLocation BUTTON_DISABLED_TEX = ResourceLocation.withDefaultNamespace("textures/gui/sprites/widget/button_disabled.png");
 
     public PlayerHeadEditorScreen(Screen parent) {
         super(Component.literal("Head Editor"));
         this.parent = parent;
     }
 
-    private int debugMouseX = 0;
-    private int debugMouseY = 0;
+    private int pixelMouseX = 0;
+    private int pixelMouseY = 0;
+    private boolean hoveringImage = false;
+    private boolean hoveringModel = false;
+
+    private int red = 255;
+    private int green = 255;
+    private int blue = 255;
+    private int alpha = 255;
+    private int selectedColor = 0xFFFFFFFF;
+
+    private static final ModelPart BaseModel = PlayerHead.createHeadModel(0, 0, HeadTextureWidth, HeadTextureHeight);
+    private static final ModelPart HatModel = PlayerHead.createHeadModel(HeadTextureWidth / 2, 0, HeadTextureWidth, HeadTextureHeight);
 
     @Override
     protected void init() {
@@ -61,17 +75,43 @@ public class PlayerHeadEditorScreen extends Screen {
                 width - ICON_SIZE * 2, ICON_SIZE,
                 ICON_SIZE * 2, ICON_SIZE,
                 BUTTON_TEX,
-                () ->{
-                    PlayerHead.reset();
-                    DynamicSkinManager.updateHead(PlayerHead.getTexture());
-                },
+                ()-> DynamicSkinManager.reset().thenRun(PlayerHead::reset),
                 "Reset"
         ));
+        // Save button
+        addRenderableWidget(new IconButton(
+                ICON_SIZE, ICON_SIZE,
+                ICON_SIZE * 2, ICON_SIZE,
+                BUTTON_TEX,
+                () -> DynamicSkinManager.updateHead(getDynamicHead().getPixels()),
+                "Save"
+        ));
+        addRenderableWidget(new Slider(50, height - 40, 100, 10, "R", red, value -> {
+            red = value;
+            updateSelectedColor();
+        }));
+        addRenderableWidget(new Slider(50, height - 30, 100, 10, "G", green, value -> {
+            green = value;
+            updateSelectedColor();
+        }));
+        addRenderableWidget(new Slider(50, height - 20, 100, 10, "B", blue, value -> {
+            blue = value;
+            updateSelectedColor();
+        }));
+        addRenderableWidget(new Slider(50, height - 10, 100, 10, "A", alpha, value -> {
+            alpha = value;
+            updateSelectedColor();
+        }));
 
         if (!DynamicSkinManager.initialized) {
             DynamicSkinManager.initialize().thenRun(PlayerHead::initialize);
         }
     }
+
+    private void updateSelectedColor() {
+        selectedColor = (alpha << 24) | (red << 16) | (green << 8) | blue;
+    }
+
 
     @Override
     public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
@@ -80,37 +120,82 @@ public class PlayerHeadEditorScreen extends Screen {
         Component title = Component.translatable("screens.eyeframes.head_viewer");
         context.drawString(font, title, width / 2 - font.width(title) / 2, 10, 0xFFFFFFFF, true);
 
-        render3DPlayerHead(context, mouseX, mouseY);
+        int w = HeadTextureWidth / 2 * IMAGE_SCALE;
+        int h = HeadTextureHeight * IMAGE_SCALE;
+        int x = 3 * width / 4 - w / 2;
+        int y = height / 2 - h / 2 - h / 2;
 
-        String coords = String.format("Mouse: (%d, %d)", debugMouseX, debugMouseY);
-        context.drawString(font, coords, 10, height - 20, 0xFFFFFF00, true);
+        pixelMouseX = (mouseX - x) / IMAGE_SCALE;
+        pixelMouseY = (mouseY - y) / IMAGE_SCALE;
+
+        if (mouseX > x && mouseY > y + h) {
+            pixelMouseX += 32;
+            pixelMouseY -= 16;
+        }
+
+        Font renderer = Minecraft.getInstance().font;
+        String message = String.format("{%d,%d}", pixelMouseX, pixelMouseY);
+        context.drawCenteredString(
+                renderer,
+                message,
+                renderer.width(message) / 2, height - renderer.lineHeight,
+                0xFFFFFF00
+        );
+
+        render3DPlayerHead(context);
+        render2DPlayerHead(context, x, y, w, h);
+
+        //selection
+        hoveringModel = (mouseX < width / 2) && !(mouseDown && hoveringImage) || (mouseDown && hoveringModel);
+        hoveringImage = (mouseX < x + w) && ((mouseDown && hoveringImage) || (mouseX >= x && mouseY >= y && mouseY < y + h * 2));
+
+        //color preview
+        context.fill(
+                0, width / 2 - 10,
+                20, width / 2 + 10,
+                selectedColor
+        );
     }
 
-    private void render3DPlayerHead(GuiGraphics context, int mouseX, int mouseY) {
+    private void render3DPlayerHead(GuiGraphics context) {
         if (!DynamicSkinManager.initialized) return;
 
-        int centerX = width / 2 - 50;
+        int centerX = width / 4;
         int centerY = height / 2 + 20;
+
+        MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
+        VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.entityTranslucent(DynamicHeadLocation));
+        Quaternionf rotation = new Quaternionf().rotateXYZ((float) Math.toRadians(rotX), (float) Math.toRadians(rotY), 0);
+        int light = 0xF000F0;
+        int overlay = OverlayTexture.NO_OVERLAY;
 
         PoseStack poseStack = context.pose();
         poseStack.pushPose();
 
-        poseStack.translate(centerX, centerY, IMAGE_SCALE);
-        float scale = IMAGE_SCALE;
-        poseStack.scale(scale, scale, scale);
-
-        Quaternionf rotation = new Quaternionf().rotateXYZ((float) Math.toRadians(rotX), (float) Math.toRadians(rotY), 0);
+        poseStack.translate(centerX, centerY, MODEL_SCALE);
+        poseStack.scale(-MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
         poseStack.mulPose(rotation);
 
-        MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
-        VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.entitySolid(DynamicSkinManager.getDynamicSkinTextureLocation()));
-
-        int light = 0xF000F0;
-        int overlay = OverlayTexture.NO_OVERLAY;
-
-        PlayerHead.getHeadModel().render(
+        BaseModel.render(
                 poseStack,
                 vertexConsumer,
+                light,
+                overlay,
+                0xFFFFFFFF
+        );
+
+        poseStack.popPose();
+        poseStack.pushPose();
+
+        poseStack.translate(centerX, centerY + MODEL_SCALE / 32F, MODEL_SCALE);
+        poseStack.scale(-MODEL_SCALE - MODEL_SCALE / 8F, MODEL_SCALE + MODEL_SCALE / 8F, MODEL_SCALE + MODEL_SCALE / 8F);
+        poseStack.mulPose(rotation);
+
+        VertexConsumer hatConsumer = bufferSource.getBuffer(RenderType.entityTranslucent(DynamicHeadLocation));
+
+        HatModel.render(
+                poseStack,
+                hatConsumer,
                 light,
                 overlay,
                 0xFFFFFFFF
@@ -120,27 +205,77 @@ public class PlayerHeadEditorScreen extends Screen {
         poseStack.popPose();
     }
 
+    private void render2DPlayerHead(GuiGraphics context, int x, int y, int w, int h){
+
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+
+        context.blit(
+                DynamicHeadLocation,
+                x, y,
+                w, h,
+                0, 0,
+                HeadTextureWidth / 2, HeadTextureHeight,
+                HeadTextureWidth, HeadTextureHeight
+        );
+
+        context.blit(
+                DynamicHeadLocation,
+                x, y + h,
+                w, h,
+                HeadTextureWidth / 2F, 0,
+                HeadTextureWidth / 2, HeadTextureHeight,
+                HeadTextureWidth, HeadTextureHeight
+        );
+
+        RenderSystem.disableBlend();
+
+        if (hoveringImage && !(hoveringModel && mouseDown) &&
+            pixelMouseX >= 0 && pixelMouseX < HeadTextureWidth &&
+            pixelMouseY >= 0 && pixelMouseY < HeadTextureHeight) {
+            int tempX;
+            int tempY;
+            if (pixelMouseX < HeadTextureWidth / 2){
+                tempX = x + pixelMouseX * IMAGE_SCALE;
+                tempY = y + pixelMouseY * IMAGE_SCALE;
+            }
+            else{
+                tempX = x + (pixelMouseX - HeadTextureWidth / 2) * IMAGE_SCALE;
+                tempY = y + (pixelMouseY + HeadTextureHeight) * IMAGE_SCALE;
+            }
+            context.renderOutline(
+                    tempX, tempY,
+                    w * 2 / HeadTextureWidth, h / HeadTextureHeight,
+                    0xFFFFFFFF
+            );
+        }
+    }
+
     @Override
     public boolean mouseDragged(double x, double y, int button, double deltaX, double deltaY) {
-        if (rotating) {
-            rotY -= (float) (deltaX * 0.5f);
-            rotX += (float) (deltaY * 0.5f);
-            rotX = Math.max(-90f, Math.min(90f, rotX));
+        if (super.mouseDragged(x, y, button, deltaX, deltaY)) {
             return true;
         }
-        else if (penTool) {
-            editPixel(x, y);
+
+        if (hoveringModel) {
+            rotY -= (float) (deltaX * 0.5f);
+            rotX -= (float) (deltaY * 0.5f);
+            rotX = Math.max(-90f, Math.min(90f, rotX));
+            return true;
+        } else if (hoveringImage) {
+            editPixel();
+            return true;
         }
-        return super.mouseDragged(x, y, button, deltaX, deltaY);
+
+        return false;
     }
 
     @Override
     public boolean mouseClicked(double x, double y, int i) {
         if (i == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
             mouseDown = true;
-            if (penTool) {
-                editPixel(x, y);
-            }
+            if (hoveringImage)
+                editPixel();
         }
 
         return super.mouseClicked(x, y, i);
@@ -148,24 +283,18 @@ public class PlayerHeadEditorScreen extends Screen {
 
     @Override
     public boolean mouseReleased(double x, double y, int i) {
-        if (i == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (i == GLFW.GLFW_MOUSE_BUTTON_LEFT)
             mouseDown = false;
-            rotating = false;
-        }
         return super.mouseReleased(x, y, i);
     }
 
-    private void editPixel(double mouseX, double mouseY) {
-        int px=(int)mouseX;
-        int py=(int)mouseY;
-
-        debugMouseX = px;
-        debugMouseY = py;
-
-        if (px >= 0 && px < HeadTextureWidth &&
-            py >= 0 && py < HeadTextureHeight) {
-            PlayerHead.getTexture().setPixelRGBA(px, py, 0xFFFF00FF);
-            DynamicSkinManager.updateHead(PlayerHead.getTexture());
+    private void editPixel() {
+        NativeImage img = EyeFramesClient.getDynamicHead().getPixels();
+        assert img != null;
+        if (pixelMouseX >= 0 && pixelMouseX < HeadTextureWidth &&
+            pixelMouseY >= 0 && pixelMouseY < HeadTextureHeight) {
+            img.setPixelRGBA(pixelMouseX, pixelMouseY, selectedColor);
+            EyeFramesClient.getDynamicHead().upload();
         }
     }
 

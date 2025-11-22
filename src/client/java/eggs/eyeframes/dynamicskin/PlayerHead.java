@@ -1,33 +1,31 @@
 package eggs.eyeframes.dynamicskin;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import eggs.eyeframes.EyeFrames;
-import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.PlayerModel;
+import eggs.eyeframes.EyeFramesClient;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.core.Direction;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
 
-import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import static eggs.eyeframes.EyeFramesClient.HeadTextureHeight;
+import static eggs.eyeframes.EyeFramesClient.HeadTextureWidth;
+import static eggs.eyeframes.dynamicskin.DynamicSkinManager.crop;
 
 public class PlayerHead {
-
-    public static final int HeadTextureWidth = 64;
-    public static final int HeadTextureHeight = 16;
-
     private static final HashMap<String, NativeImage> headStates = new HashMap<>();
     private static String currentState = "default";
 
     public static boolean initialized = false;
 
-    private static ModelPart headModel = null;
-
     public static void initialize() {
-        initialized = true;
-        reset();
+        if (!initialized) {
+            initialized = true;
+            reset();
+        }
     }
 
     public static void reset() {
@@ -36,59 +34,40 @@ public class PlayerHead {
         headStates.clear();
         NativeImage base = DynamicSkinManager.vanillaSkin;
         NativeImage head = crop(base, 0, 0, HeadTextureWidth, HeadTextureHeight);
+        EyeFramesClient.getDynamicHead().setPixels(head);
+        EyeFramesClient.getDynamicHead().upload();
         headStates.put("default", head);
     }
 
-    public static NativeImage getTexture() {
-        return getTexture(currentState);
-    }
-
     public static NativeImage getTexture(String state) {
-        if (!initialized) {
-            EyeFrames.EYEFRAMES_LOGGER.error("PlayerHead used before initialization");
-            assert false;
-        }
-
         return headStates.getOrDefault(state, headStates.get("default"));
     }
 
     public static void setState(String state) {
         currentState = state;
+        EyeFramesClient.getDynamicHead().setPixels(headStates.getOrDefault(state, headStates.get("default")));
+        EyeFramesClient.getDynamicHead().upload();
     }
-
+    public static String getState(){
+        return currentState;
+    }
     public static void putState(String state, NativeImage head) {
         headStates.put(state, head);
     }
 
-    public static NativeImage crop(NativeImage source, int x, int y, int width, int height) {
-        NativeImage out = new NativeImage(width, height, true);
+    public static ModelPart createHeadModel(int u, int v, int w, int h) {
 
-        for (int px = 0; px < width; px++) {
-            for (int py = 0; py < height; py++) {
-                out.setPixelRGBA(px, py, source.getPixelRGBA(x + px, y + py));
-            }
-        }
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
 
-        return out;
-    }
-
-    public static ModelPart getHeadModel() {
-        if (headModel != null) return headModel;
-
-        EnumSet<Direction> allFaces = EnumSet.allOf(Direction.class);
-
-        ModelPart.Cube headCube = new ModelPart.Cube(
-                0, 0,// uv
-                -4.0f, -8.0f, -4.0f,
-                8.0f, 8.0f, 8.0f,
-                0, 0, 0,
-                false,
-                64, 64,// texture size
-                allFaces
+        root.addOrReplaceChild(
+                "head",
+                CubeListBuilder.create()
+                        .texOffs(u, v)
+                        .addBox(-4.0F, -8.0F, -4.0F, 8.0F, 8.0F, 8.0F),
+                PartPose.ZERO
         );
 
-        headModel = new ModelPart(List.of(headCube), Map.of());
-
-        return headModel;
+        return LayerDefinition.create(mesh, w, h).bakeRoot().getChild("head");
     }
 }

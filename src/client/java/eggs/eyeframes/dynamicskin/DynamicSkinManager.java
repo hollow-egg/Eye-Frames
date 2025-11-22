@@ -2,56 +2,58 @@ package eggs.eyeframes.dynamicskin;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import eggs.eyeframes.EyeFrames;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.resources.ResourceLocation;
+import eggs.eyeframes.EyeFramesClient;
 
 import java.util.concurrent.CompletableFuture;
 
-public class DynamicSkinManager {
+import static eggs.eyeframes.EyeFramesClient.*;
 
-    static DynamicTexture dynamicSkin;
-    static ResourceLocation dynamicSkinLoc;
+public class DynamicSkinManager {
     static NativeImage vanillaSkin;
 
     public static boolean initialized = false;
 
-    public static final int PlayerTextureWidth = 64;
-    public static final int PlayerTextureHeight = 64;
-
     public static CompletableFuture<Void> initialize() {
-        return VanillaSkin.loadVanillaSkin().thenAccept(img -> {
-            initialized = true;
+        initialized = true;
 
+        return reset();
+    }
+
+    public static CompletableFuture<Void> reset(){
+        return VanillaSkin.loadVanillaSkin().thenAccept(img -> {
             vanillaSkin = img;
 
-            dynamicSkin = new DynamicTexture(vanillaSkin);
-            dynamicSkinLoc = Minecraft.getInstance()
-                    .getTextureManager()
-                    .register("dynamic_skin", dynamicSkin);
+            EyeFramesClient.getDynamicSkin().setPixels(vanillaSkin);
+            EyeFramesClient.getDynamicSkin().upload();
         });
     }
 
-    public static ResourceLocation getDynamicSkinTextureLocation() {
-        return dynamicSkinLoc;
-    }
-
     public static void updateHead(NativeImage head) {
-        if (dynamicSkin == null) return;
-
-        NativeImage img = dynamicSkin.getPixels();
+        NativeImage img = EyeFramesClient.getDynamicSkin().getPixels();
         if (img == null)
         {
             EyeFrames.EYEFRAMES_LOGGER.error("Failed to load dynamic player head");
             assert false;
         }
 
-        for (int y = 0; y < PlayerHead.HeadTextureHeight; y++) {
-            for (int x = 0; x < PlayerHead.HeadTextureWidth; x++) {
+        for (int y = 0; y < HeadTextureHeight; y++) {
+            for (int x = 0; x < HeadTextureWidth; x++) {
                 img.setPixelRGBA(x, y, head.getPixelRGBA(x, y));
             }
         }
 
-        dynamicSkin.upload();
+        EyeFramesClient.getDynamicSkin().upload();
+    }
+
+    public static NativeImage crop(NativeImage source, int x, int y, int width, int height) {
+        NativeImage out = new NativeImage(width, height, true);
+
+        for (int px = 0; px < width; px++) {
+            for (int py = 0; py < height; py++) {
+                out.setPixelRGBA(px, py, source.getPixelRGBA(x + px, y + py));
+            }
+        }
+
+        return out;
     }
 }

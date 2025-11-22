@@ -1,4 +1,4 @@
-package eggs.eyeframes.screens.options.widgets;
+package eggs.eyeframes.screens.widgets;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

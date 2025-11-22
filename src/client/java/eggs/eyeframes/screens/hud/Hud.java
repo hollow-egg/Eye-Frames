@@ -1,7 +1,7 @@
 package eggs.eyeframes.screens.hud;
 
-import eggs.eyeframes.screens.hud.widgets.PlayerHeadPreviewHudButton;
-import eggs.eyeframes.screens.hud.widgets.SimpleHudButton;
+import eggs.eyeframes.screens.widgets.PlayerHeadPreviewHudButton;
+import eggs.eyeframes.screens.widgets.SimpleHudButton;
 import eggs.eyeframes.tools.Input;
 import java.util.ArrayList;
 

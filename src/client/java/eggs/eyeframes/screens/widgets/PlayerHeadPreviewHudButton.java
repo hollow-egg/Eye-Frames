@@ -1,14 +1,12 @@
-package eggs.eyeframes.screens.hud.widgets;
+package eggs.eyeframes.screens.widgets;
 
-import eggs.eyeframes.dynamicskin.DynamicSkinManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.GuiGraphics;
 
-import static eggs.eyeframes.EyeFrames.*;
-import static eggs.eyeframes.dynamicskin.DynamicSkinManager.PlayerTextureHeight;
-import static eggs.eyeframes.dynamicskin.DynamicSkinManager.PlayerTextureWidth;
+import static eggs.eyeframes.EyeFramesClient.*;
 
 @Environment(EnvType.CLIENT)
 public class PlayerHeadPreviewHudButton implements HudButton {
@@ -25,29 +23,34 @@ public class PlayerHeadPreviewHudButton implements HudButton {
 
     @Override
     public void render(GuiGraphics context, double mouseX, double mouseY, DeltaTracker tickDelta) {
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+
         // Bottom layer
         int u = 8;
         int v = 8;
         context.blit(
-                DynamicSkinManager.getDynamicSkinTextureLocation(),
+                DynamicHeadLocation,
                 x, y,
                 width, height,
                 (float)u, (float)v,
                 8, 8,
-                PlayerTextureWidth, PlayerTextureHeight
+                HeadTextureWidth, HeadTextureHeight
         );
 
         // Top layer
         u+=32;
         int offset = 1;
         context.blit(
-                DynamicSkinManager.getDynamicSkinTextureLocation(),
+                DynamicHeadLocation,
                 x - offset, y - offset,
                 width + offset * 2, width + offset * 2,
                 (float)u, (float)v,
                 8, 8,
-                PlayerTextureWidth, PlayerTextureHeight
+                HeadTextureWidth, HeadTextureHeight
         );
+
+        RenderSystem.disableBlend();
 
         if (isHovered(mouseX, mouseY)) {
             context.renderOutline(x - 1, y - 1,
