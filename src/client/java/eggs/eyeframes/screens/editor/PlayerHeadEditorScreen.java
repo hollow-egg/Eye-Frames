@@ -55,6 +55,7 @@ public class PlayerHeadEditorScreen extends Screen {
     private int blue = 255;
     private int alpha = 255;
     private int selectedColor = 0xFFFFFFFF;
+    private int previewColor = 0xFFFFFFFF;
 
     private static final ModelPart BaseModel = PlayerHead.createHeadModel(0, 0, HeadTextureWidth, HeadTextureHeight);
     private static final ModelPart HatModel = PlayerHead.createHeadModel(HeadTextureWidth / 2, 0, HeadTextureWidth, HeadTextureHeight);
@@ -109,7 +110,8 @@ public class PlayerHeadEditorScreen extends Screen {
     }
 
     private void updateSelectedColor() {
-        selectedColor = (alpha << 24) | (red << 16) | (green << 8) | blue;
+        selectedColor = (alpha << 24) | (blue << 16) | (green << 8) | red;
+        previewColor = (alpha << 24) | (red << 16) | (green << 8) | blue;
     }
 
 
@@ -153,7 +155,7 @@ public class PlayerHeadEditorScreen extends Screen {
         context.fill(
                 0, width / 2 - 10,
                 20, width / 2 + 10,
-                selectedColor
+                previewColor
         );
     }
 
