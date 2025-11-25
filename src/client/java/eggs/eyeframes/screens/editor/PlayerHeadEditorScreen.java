@@ -87,6 +87,28 @@ public class PlayerHeadEditorScreen extends Screen {
                 () -> DynamicSkinManager.updateHead(getDynamicHead().getPixels()),
                 "Save"
         ));
+        // Up Frame button
+        addRenderableWidget(new IconButton(
+                width / 2 + 50, ICON_SIZE,
+                ICON_SIZE, ICON_SIZE,
+                BUTTON_TEX,
+                () -> {
+                    PlayerHead.setState(PlayerHead.getState()+1);
+                    DynamicSkinManager.updateHead(getDynamicHead().getPixels());
+                },
+                ">"
+        ));
+        // Down Frame button
+        addRenderableWidget(new IconButton(
+                width / 2 - 50 - ICON_SIZE, ICON_SIZE,
+                ICON_SIZE, ICON_SIZE,
+                BUTTON_TEX,
+                () -> {
+                    PlayerHead.setState(PlayerHead.getState()-1);
+                    DynamicSkinManager.updateHead(getDynamicHead().getPixels());
+                },
+                "<"
+        ));
         addRenderableWidget(new Slider(50, height - 40, 100, 10, "R", red, value -> {
             red = value;
             updateSelectedColor();
@@ -141,6 +163,15 @@ public class PlayerHeadEditorScreen extends Screen {
                 renderer,
                 message,
                 renderer.width(message) / 2, height - renderer.lineHeight,
+                0xFFFFFF00
+        );
+
+        //frame counter
+        message = String.format("Frame: %d", PlayerHead.getState());
+        context.drawCenteredString(
+                renderer,
+                message,
+                width / 2, renderer.lineHeight * 2,
                 0xFFFFFF00
         );
 

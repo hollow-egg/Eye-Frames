@@ -1,5 +1,8 @@
 package eggs.eyeframes.screens.hud;
 
+import eggs.eyeframes.EyeFramesClient;
+import eggs.eyeframes.dynamicskin.DynamicSkinManager;
+import eggs.eyeframes.dynamicskin.PlayerHead;
 import eggs.eyeframes.screens.widgets.PlayerHeadPreviewHudButton;
 import eggs.eyeframes.screens.widgets.SimpleHudButton;
 import eggs.eyeframes.tools.Input;
@@ -87,8 +90,13 @@ public class Hud {
             double mouseX = client.mouseHandler.xpos() * context.guiWidth() / client.getWindow().getScreenWidth();
             double mouseY = client.mouseHandler.ypos() * context.guiHeight() / client.getWindow().getScreenHeight();
 
-            for (SimpleHudButton button : OverlayButtons)
-                button.render(context, mouseX, mouseY, tick);
+            for (int i = 0; i < OverlayButtons.size(); ++i) {
+                OverlayButtons.get(i).render(context, mouseX, mouseY, tick);
+                if (i != PlayerHead.getState() && OverlayButtons.get(i).isHovered(mouseX, mouseY)) {
+                    PlayerHead.setState(i);
+                    DynamicSkinManager.updateHead(EyeFramesClient.getDynamicHead().getPixels());
+                }
+            }
             iconPreview.render(context, mouseX, mouseY, tick);
         }
         else if (iconPreview != null)

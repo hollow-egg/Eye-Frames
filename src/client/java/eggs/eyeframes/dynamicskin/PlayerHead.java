@@ -9,50 +9,61 @@ import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 
-import java.util.HashMap;
-
 import static eggs.eyeframes.EyeFramesClient.HeadTextureHeight;
 import static eggs.eyeframes.EyeFramesClient.HeadTextureWidth;
 import static eggs.eyeframes.dynamicskin.DynamicSkinManager.crop;
 
 public class PlayerHead {
-    private static final HashMap<String, NativeImage> headStates = new HashMap<>();
-    private static String currentState = "default";
+    private static final int frameCount = 8;
+    private static final NativeImage[] headframes = new NativeImage[frameCount];
+    private static int currentState = 0;
 
     public static boolean initialized = false;
 
     public static void initialize() {
         if (!initialized) {
             initialized = true;
-            reset();
+            NativeImage base = DynamicSkinManager.vanillaSkin;
+            NativeImage head = crop(base, 0, 0, HeadTextureWidth, HeadTextureHeight);
+            EyeFramesClient.getDynamicHead().setPixels(head);
+            EyeFramesClient.getDynamicHead().upload();
+            for (int i = 0; i < frameCount; ++i){
+                headframes[i] = new NativeImage(HeadTextureWidth, HeadTextureHeight, false);
+                headframes[i].copyFrom(head);
+            }
         }
     }
 
     public static void reset() {
         if (!initialized) return;
 
-        headStates.clear();
         NativeImage base = DynamicSkinManager.vanillaSkin;
         NativeImage head = crop(base, 0, 0, HeadTextureWidth, HeadTextureHeight);
         EyeFramesClient.getDynamicHead().setPixels(head);
         EyeFramesClient.getDynamicHead().upload();
-        headStates.put("default", head);
+        headframes[currentState] = new NativeImage(HeadTextureWidth, HeadTextureHeight, false);
+        headframes[currentState].copyFrom(head);
     }
 
-    public static NativeImage getTexture(String state) {
-        return headStates.getOrDefault(state, headStates.get("default"));
+    public static NativeImage getTexture(int state) {
+        return headframes[state];
     }
 
-    public static void setState(String state) {
-        currentState = state;
-        EyeFramesClient.getDynamicHead().setPixels(headStates.getOrDefault(state, headStates.get("default")));
+    public static void saveState(){
+        headframes[currentState] = new NativeImage(HeadTextureWidth, HeadTextureHeight, false);
+        headframes[currentState].copyFrom(EyeFramesClient.getDynamicHead().getPixels());
+    }
+
+    public static void setState(int state) {
+        saveState();
+        while (state < 0)
+            state+=frameCount;
+        currentState = state%frameCount;
+        EyeFramesClient.getDynamicHead().setPixels(headframes[currentState]);
         EyeFramesClient.getDynamicHead().upload();
     }
-    public static String getState(){
+    public static int getState(){
         return currentState;
-    }
-    public static void putState(String state, NativeImage head) {
-        headStates.put(state, head);
     }
 
     public static ModelPart createHeadModel(int u, int v, int w, int h) {
