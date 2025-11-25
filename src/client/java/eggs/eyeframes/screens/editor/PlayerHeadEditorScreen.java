@@ -51,12 +51,12 @@ public class PlayerHeadEditorScreen extends Screen {
     private boolean hoveringImage = false;
     private boolean hoveringModel = false;
 
-    private int red = 255;
-    private int green = 255;
-    private int blue = 255;
-    private int alpha = 255;
     private int selectedColor = 0xFFFFFFFF;
     private int previewColor = 0xFFFFFFFF;
+    private Slider redSlider;
+    private Slider greenSlider;
+    private Slider blueSlider;
+    private Slider alphaSlider;
 
     private IconButton pickerButton;
 
@@ -123,22 +123,22 @@ public class PlayerHeadEditorScreen extends Screen {
                 },
                 "<"
         ));
-        addRenderableWidget(new Slider(50, height - 40, 100, 10, "R", red, value -> {
-            red = value;
+        redSlider = new Slider(50, height - 40, 100, 10, "R", 255, value -> {
             updateSelectedColor();
-        }));
-        addRenderableWidget(new Slider(50, height - 30, 100, 10, "G", green, value -> {
-            green = value;
+        });
+        greenSlider = new Slider(50, height - 30, 100, 10, "G", 255, value -> {
             updateSelectedColor();
-        }));
-        addRenderableWidget(new Slider(50, height - 20, 100, 10, "B", blue, value -> {
-            blue = value;
+        });
+        blueSlider = new Slider(50, height - 20, 100, 10, "B", 255, value -> {
             updateSelectedColor();
-        }));
-        addRenderableWidget(new Slider(50, height - 10, 100, 10, "A", alpha, value -> {
-            alpha = value;
+        });
+        alphaSlider = new Slider(50, height - 10, 100, 10, "A", 255, value -> {
             updateSelectedColor();
-        }));
+        });
+        addRenderableWidget(redSlider);
+        addRenderableWidget(greenSlider);
+        addRenderableWidget(blueSlider);
+        addRenderableWidget(alphaSlider);
 
         if (!DynamicSkinManager.initialized) {
             DynamicSkinManager.initialize().thenRun(PlayerHead::initialize);
@@ -146,10 +146,9 @@ public class PlayerHeadEditorScreen extends Screen {
     }
 
     private void updateSelectedColor() {
-        selectedColor = (alpha << 24) | (blue << 16) | (green << 8) | red;
-        previewColor = (alpha << 24) | (red << 16) | (green << 8) | blue;
+        selectedColor = (alphaSlider.getValue() << 24) | (blueSlider.getValue() << 16) | (greenSlider.getValue() << 8) | redSlider.getValue();
+        previewColor = (alphaSlider.getValue() << 24) | (redSlider.getValue() << 16) | (greenSlider.getValue() << 8) | blueSlider.getValue();
     }
-
 
     @Override
     public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
@@ -342,7 +341,11 @@ public class PlayerHeadEditorScreen extends Screen {
             pixelMouseY >= 0 && pixelMouseY < HeadTextureHeight) {
             if (!pickerButton.active){
                 selectedColor = EyeFramesClient.getDynamicHead().getPixels().getPixelRGBA(pixelMouseX, pixelMouseY);
-                //TODO
+                redSlider.setValue(selectedColor           & 0xFF);
+                greenSlider.setValue((selectedColor >> 8)  & 0xFF);
+                blueSlider.setValue((selectedColor >> 16)  & 0xFF);
+                alphaSlider.setValue((selectedColor >> 24) & 0xFF);
+                updateSelectedColor();
 
                 pickerButton.active = true;
                 pickerButton.setTexture(BUTTON_TEX);

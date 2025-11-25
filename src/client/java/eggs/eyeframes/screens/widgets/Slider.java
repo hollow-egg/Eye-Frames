@@ -30,4 +30,11 @@ public class Slider extends AbstractSliderButton {
         String msg = getMessage().getString();
         return msg.split(":")[0];
     }
+
+    public void setValue(int val){
+        value = val / 255f;
+    }
+    public int getValue(){
+        return (int)(value * 255);
+    }
 }
