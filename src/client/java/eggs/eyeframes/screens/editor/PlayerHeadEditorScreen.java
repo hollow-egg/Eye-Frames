@@ -39,6 +39,7 @@ public class PlayerHeadEditorScreen extends Screen {
     private static final int MODEL_SCALE = 100;
     private static boolean mouseDown = false;
     private static final ResourceLocation BUTTON_TEX = ResourceLocation.withDefaultNamespace("textures/gui/sprites/widget/button.png");
+    private static final ResourceLocation BUTTON_TEX_DISABLED = ResourceLocation.withDefaultNamespace("textures/gui/sprites/widget/button_disabled.png");
 
     public PlayerHeadEditorScreen(Screen parent) {
         super(Component.literal("Head Editor"));
@@ -56,6 +57,8 @@ public class PlayerHeadEditorScreen extends Screen {
     private int alpha = 255;
     private int selectedColor = 0xFFFFFFFF;
     private int previewColor = 0xFFFFFFFF;
+
+    private IconButton pickerButton;
 
     private static final ModelPart BaseModel = PlayerHead.createHeadModel(0, 0, HeadTextureWidth, HeadTextureHeight);
     private static final ModelPart HatModel = PlayerHead.createHeadModel(HeadTextureWidth / 2, 0, HeadTextureWidth, HeadTextureHeight);
@@ -87,6 +90,17 @@ public class PlayerHeadEditorScreen extends Screen {
                 () -> DynamicSkinManager.updateHead(getDynamicHead().getPixels()),
                 "Save"
         ));
+        // Picker button
+        pickerButton = new IconButton(
+                ICON_SIZE, ICON_SIZE * 2,
+                ICON_SIZE * 2, ICON_SIZE,
+                BUTTON_TEX,
+                ()->{
+                    pickerButton.active = false;
+                    pickerButton.setTexture(BUTTON_TEX_DISABLED);
+                },
+                "Pick");
+        addRenderableWidget(pickerButton);
         // Up Frame button
         addRenderableWidget(new IconButton(
                 width / 2 + 50, ICON_SIZE,
@@ -326,8 +340,17 @@ public class PlayerHeadEditorScreen extends Screen {
         assert img != null;
         if (pixelMouseX >= 0 && pixelMouseX < HeadTextureWidth &&
             pixelMouseY >= 0 && pixelMouseY < HeadTextureHeight) {
-            img.setPixelRGBA(pixelMouseX, pixelMouseY, selectedColor);
-            EyeFramesClient.getDynamicHead().upload();
+            if (!pickerButton.active){
+                selectedColor = EyeFramesClient.getDynamicHead().getPixels().getPixelRGBA(pixelMouseX, pixelMouseY);
+                //TODO
+
+                pickerButton.active = true;
+                pickerButton.setTexture(BUTTON_TEX);
+            }
+            else {
+                img.setPixelRGBA(pixelMouseX, pixelMouseY, selectedColor);
+                EyeFramesClient.getDynamicHead().upload();
+            }
         }
     }
 
